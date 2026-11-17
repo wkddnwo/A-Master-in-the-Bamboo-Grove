@@ -1,4 +1,8 @@
 import pygame
+import math
+
+
+
 
 pygame.init()
 
@@ -29,13 +33,14 @@ class Screen_State:
 
 class main_menu(Screen_State):
     def __init__(self, screen):
+        pygame.display.set_caption("죽림고수 - 모드 선택")
         def change_aroww_mode():
-            screen.state = arrow_mode()
+            screen.state = arrow_mode(screen)
         def change_boom_mode():
-            screen.state = boom_mode()
+            screen.state = boom_mode(screen)
         
-        self.font = pygame.font.SysFont("malgungothic", 40, bold=True)
-        self.title = self.font.render("모드를 선택하세요", True, color.WHITE)
+        #self.font = pygame.font.SysFont("malgungothic", 40, bold=True)
+        self.title = font.malgunbd.render("모드를 선택하세요", True, color.WHITE)
         
         #버튼선언
         self.aroww_mode_btn = Button("무한모드", (200, 200), (200, 60), change_aroww_mode)
@@ -82,20 +87,72 @@ class Button:
 
 
 class arrow_mode(Screen_State):
+    def __init__(self, screen):
+        pygame.display.set_caption("죽림고수 - 무한모드")
+        
+        self.state = Playeralive()
+
     def update(self, screen):
+        #맵 그리기
         screen.screen.fill(color.BLACK)
+        pygame.draw.circle(screen.screen, (30, 30, 30), (screen.WIDTH // 2, screen.HEIGHT // 2), 250)
+        
+        
+        self.state.update(screen)
         pygame.display.flip()
     
     def event_update(self, event):
         pass
 
 class boom_mode(Screen_State):
+    def __init__(self, screen):
+        pygame.display.set_caption("죽림고수 - 폭탄모드")
     def update(self, screen):
         screen.screen.fill(color.BLACK)
         pygame.display.flip()
 
     def event_update(self, event):
         pass
+
+class Player:
+    def __init__(self, hp, screen):
+        self.player_color = (50, 200, 255)
+        self.player_radius = 5
+        self.posx = screen.WIDTH // 2
+        self.posy = screen.HEIGHT // 2
+        self.speed = 4
+        self.hp = hp
+        #self.state = alive()
+    def update(self, screen):
+        pygame.draw.circle(screen.screen, self.player_color, (int(self.posx), int(self.posy)), self.player_radius)
+                
+                
+        #플레이어 이동
+        dx, dy = 0, 0
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.speed
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = self.speed
+        if keys[pygame.K_UP] or keys[pygame.K_w]: dy = -self.speed
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy = self.speed
+        new_x = self.posx + dx
+        new_y = self.posy + dy
+                
+        #맵 경계선충돌 판정
+        if math.hypot(new_x - screen.WIDTH // 2, new_y - screen.HEIGHT // 2) <= 250 - self.player_radius:
+            self.posx = new_x
+            self.posy = new_y
+
+        
+
+class GameState:
+    def update(self, screen):
+        pass
+
+class Playeralive(GameState):
+    def __init__(self):
+        self.player = Player(1, screen)
+    def update(self, screen):
+        self.player.update(screen)
 
 class Screen:
     def __init__(self):
@@ -116,9 +173,12 @@ class Screen:
         self.state.event_update(event)
 
 
+
+
 screen = Screen()
 
 
+clock = pygame.time.Clock()
 running = True
 while running:
     for event in pygame.event.get():
@@ -126,7 +186,7 @@ while running:
             running = False
         screen.event_update(event)
     screen.update()
-
+    clock.tick(60)
 pygame.quit()
 
 # import pygame

@@ -15,7 +15,6 @@ pygame.display.set_caption("죽림고수 - 보스모드")
 clock = pygame.time.Clock()
 
 #이미지 불러오기
-
 #위험 표시
 danger_sign = [pygame.image.load("danger_sign.png"),
                pygame.image.load("danger_sign1.png"),
