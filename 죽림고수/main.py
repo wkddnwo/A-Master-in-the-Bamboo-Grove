@@ -3,25 +3,72 @@ import pygame
 pygame.init()
 
 
+class COLOR:
+    def __init__(self):
+        self.SILVER = "#c0c0c0"
+        self.GRAY = "#808080"
+        self.WHITE = (255, 255, 255)
+
+class FONT:
+    def __init__(self):
+        self.malgunbd = pygame.font.SysFont("malgungothic", 40, bold=True)
+
+color = COLOR()
+font = FONT()
+
 class Screen_State:
     def update(self):
         pass
 
 class main_menu(Screen_State):
     def __init__(self):
-        WHITE = (255, 255, 255)
-        self.font = pygame.font.Font(None, 40)
-        self.title = self.font.render("모드를 선택하세요", True, WHITE)
-
+        self.font = pygame.font.SysFont("malgungothic", 40, bold=True)
+        self.title = self.font.render("모드를 선택하세요", True, color.WHITE)
+        self.aroww_mode_btn = Button("무한모드", (200, 200), (200, 60))
     def update(self, screen):
         screen.screen.fill((20, 20, 20))
         screen.screen.blit(self.title, (screen.WIDTH // 2 - self.title.get_width() // 2, 100))
+        self.aroww_mode_btn.update(screen)
         
         pygame.display.flip()
         
-        
-        
-        
+class Button:
+    def __init__(self, text, pos, size):
+        self.text = font.malgunbd.render(text, True, color.WHITE)
+        self.rect = pygame.Rect(pos, size)
+        self.color = color.GRAY
+    def update(self, screen):
+        pygame.draw.rect(screen.screen, self.color, self.rect)
+        screen.screen.blit(self.text, (self.rect.centerx- self.text.get_width() // 2, self.rect.centery - self.text.get_height()//2))
+        if self.isHovered():
+            self.color = color.SILVER
+        else:
+            self.color = color.GRAY
+        for event in pygame.event.get():
+            self.isClicked(event)
+    def isHovered(self):
+        return self.rect.collidepoint(pygame.mouse.get_pos())
+    def isClicked(self, event):
+        return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
+# class Button:
+#     def __init__(self, text, pos, size):
+#         self.text = text
+#         self.rect = pygame.Rect(pos, size)
+#         self.color = HOVER
+
+#     def draw(self, surface):
+#         mouse_pos = pygame.mouse.get_pos()
+#         self.color = HOVER if self.rect.collidepoint(mouse_pos) else GRAY
+#         pygame.draw.rect(surface, self.color, self.rect)
+#         txt = font.render(self.text, True, WHITE)
+#         surface.blit(txt, (self.rect.centerx - txt.get_width() // 2,
+#                            self.rect.centery - txt.get_height() // 2))
+
+#     def is_clicked(self, event):
+#         return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
+
+
+
 
 class arrow_mode(Screen_State):
     def update(self):
