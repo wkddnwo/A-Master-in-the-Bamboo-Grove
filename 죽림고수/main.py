@@ -8,6 +8,7 @@ class COLOR:
         self.SILVER = "#c0c0c0"
         self.GRAY = "#808080"
         self.WHITE = (255, 255, 255)
+        self.BLACK = (0, 0, 0)
 
 class FONT:
     def __init__(self):
@@ -16,27 +17,47 @@ class FONT:
 color = COLOR()
 font = FONT()
 
+events = []
+
+
 class Screen_State:
     def update(self):
         pass
 
+
+
+
 class main_menu(Screen_State):
-    def __init__(self):
+    def __init__(self, screen):
+        def change_aroww_mode():
+            screen.state = arrow_mode()
+        def change_boom_mode():
+            screen.state = boom_mode()
+        
         self.font = pygame.font.SysFont("malgungothic", 40, bold=True)
         self.title = self.font.render("모드를 선택하세요", True, color.WHITE)
-        self.aroww_mode_btn = Button("무한모드", (200, 200), (200, 60))
+        
+        #버튼선언
+        self.aroww_mode_btn = Button("무한모드", (200, 200), (200, 60), change_aroww_mode)
+        self.bomb_mode_btn = Button("폭탄모드",(200, 300),(200, 60), change_boom_mode)
+    
     def update(self, screen):
         screen.screen.fill((20, 20, 20))
         screen.screen.blit(self.title, (screen.WIDTH // 2 - self.title.get_width() // 2, 100))
+        
+        #버튼 그리기
         self.aroww_mode_btn.update(screen)
-        
+        self.bomb_mode_btn.update(screen)
         pygame.display.flip()
-        
+
+
 class Button:
-    def __init__(self, text, pos, size):
+    def __init__(self, text, pos, size, callback):
         self.text = font.malgunbd.render(text, True, color.WHITE)
         self.rect = pygame.Rect(pos, size)
         self.color = color.GRAY
+        self.callback = callback
+        events.append(self.isClicked)
     def update(self, screen):
         pygame.draw.rect(screen.screen, self.color, self.rect)
         screen.screen.blit(self.text, (self.rect.centerx- self.text.get_width() // 2, self.rect.centery - self.text.get_height()//2))
@@ -48,35 +69,25 @@ class Button:
             self.isClicked(event)
     def isHovered(self):
         return self.rect.collidepoint(pygame.mouse.get_pos())
+
+
     def isClicked(self, event):
-        return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
-# class Button:
-#     def __init__(self, text, pos, size):
-#         self.text = text
-#         self.rect = pygame.Rect(pos, size)
-#         self.color = HOVER
+        if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
+            self.callback()
 
-#     def draw(self, surface):
-#         mouse_pos = pygame.mouse.get_pos()
-#         self.color = HOVER if self.rect.collidepoint(mouse_pos) else GRAY
-#         pygame.draw.rect(surface, self.color, self.rect)
-#         txt = font.render(self.text, True, WHITE)
-#         surface.blit(txt, (self.rect.centerx - txt.get_width() // 2,
-#                            self.rect.centery - txt.get_height() // 2))
 
-#     def is_clicked(self, event):
-#         return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
 
 
 
 
 class arrow_mode(Screen_State):
-    def update(self):
-        pass
+    def update(self, screen):
+        screen.screen.fill(color.BLACK)
+        pygame.display.flip()
 
 class boom_mode(Screen_State):
-    def uptade(self):
-        pass
+    def update(self, screen):
+        print("폭탄모드 입니다.")
 
 class Screen:
     def __init__(self):
@@ -88,7 +99,7 @@ class Screen:
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("죽림고수 - 모드 선택")
 
-        self.state = main_menu()
+        self.state = main_menu(self)
 
     def update(self):
         self.state.update(self)
@@ -102,6 +113,8 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        for ev in events:
+            ev(event)
     screen.update()
 
 pygame.quit()
