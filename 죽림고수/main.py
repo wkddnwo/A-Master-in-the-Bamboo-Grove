@@ -17,11 +17,11 @@ class FONT:
 color = COLOR()
 font = FONT()
 
-events = []
-
 
 class Screen_State:
-    def update(self):
+    def update(self, screen):
+        pass
+    def event_update(self, event):
         pass
 
 
@@ -50,6 +50,10 @@ class main_menu(Screen_State):
         self.bomb_mode_btn.update(screen)
         pygame.display.flip()
 
+    def event_update(self, event):
+        self.aroww_mode_btn.isClicked(event)
+        self.bomb_mode_btn.isClicked(event)
+
 
 class Button:
     def __init__(self, text, pos, size, callback):
@@ -57,7 +61,6 @@ class Button:
         self.rect = pygame.Rect(pos, size)
         self.color = color.GRAY
         self.callback = callback
-        events.append(self.isClicked)
     def update(self, screen):
         pygame.draw.rect(screen.screen, self.color, self.rect)
         screen.screen.blit(self.text, (self.rect.centerx- self.text.get_width() // 2, self.rect.centery - self.text.get_height()//2))
@@ -65,8 +68,6 @@ class Button:
             self.color = color.SILVER
         else:
             self.color = color.GRAY
-        for event in pygame.event.get():
-            self.isClicked(event)
     def isHovered(self):
         return self.rect.collidepoint(pygame.mouse.get_pos())
 
@@ -84,10 +85,17 @@ class arrow_mode(Screen_State):
     def update(self, screen):
         screen.screen.fill(color.BLACK)
         pygame.display.flip()
+    
+    def event_update(self, event):
+        pass
 
 class boom_mode(Screen_State):
     def update(self, screen):
-        print("폭탄모드 입니다.")
+        screen.screen.fill(color.BLACK)
+        pygame.display.flip()
+
+    def event_update(self, event):
+        pass
 
 class Screen:
     def __init__(self):
@@ -104,6 +112,9 @@ class Screen:
     def update(self):
         self.state.update(self)
 
+    def event_update(self, event):
+        self.state.event_update(event)
+
 
 screen = Screen()
 
@@ -113,8 +124,7 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        for ev in events:
-            ev(event)
+        screen.event_update(event)
     screen.update()
 
 pygame.quit()
