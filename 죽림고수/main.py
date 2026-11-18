@@ -39,7 +39,6 @@ class main_menu(Screen_State):
         def change_boom_mode():
             screen.state = boom_mode(screen)
         
-        #self.font = pygame.font.SysFont("malgungothic", 40, bold=True)
         self.title = font.malgunbd.render("모드를 선택하세요", True, color.WHITE)
         
         #버튼선언
@@ -53,7 +52,7 @@ class main_menu(Screen_State):
         #버튼 그리기
         self.aroww_mode_btn.update(screen)
         self.bomb_mode_btn.update(screen)
-        pygame.display.flip()
+        # pygame.display.flip()
 
     def event_update(self, event):
         self.aroww_mode_btn.isClicked(event)
@@ -99,10 +98,76 @@ class arrow_mode(Screen_State):
         
         
         self.state.update(screen)
-        pygame.display.flip()
+        
     
     def event_update(self, event):
         pass
+
+class Arrow:
+    def __init__(self, pos, target_pos):
+        self.posx = pos[0]
+        self.posy = pos[1]
+        target_posx = target_pos[0]
+        target_posy = target_pos[1]
+        dist = math.hypot(target_posx-self.posx, target_posy - self.posy)
+        self.speed = 3.5
+        self.dx = (target_posx - self.posx) / dist
+        self.dy = (target_posy - self.posy) / dist
+
+        #화살 이미지 생성
+        self.size = (4, 12)
+        angle = math.atan2(self.dy, self.dx)
+        surf = pygame.Surface(self.size)
+        surf.fill((255, 60, 60))
+        surf.set_colorkey(color.BLACK)
+        self.rot_image = pygame.transform.rotate(surf, -math.degrees(angle))
+        self.rect = self.rot_image.get_rect(center=(self.posx, self.posy))
+
+        
+    def update(self, screen):
+        #위치 업데이트
+        self.posx += (self.dx * self.speed)
+        self.posy += (self.dy * self.speed)
+        #이미지 그리기
+        self.rect = self.rot_image.get_rect(center=(self.posx, self.posy))
+        screen.screen.blit(self.rot_image, self.rect)
+
+class ArrowGenerator:
+    def __init__(self, game_start_time):
+        self.arrows = []
+        self.last_time = game_start_time
+        self.last_time_special = game_start_time
+        self.firing_cooldown = 500
+        self.special_firing_cooldown = 5000
+    def update(self, screen, player):
+        if pygame.time.get_ticks() - self.last_time >= self.firing_cooldown :
+            angle = math.atan2(player.posy - screen.HEIGHT // 2, player.posx - screen.WIDTH // 2)
+            pos_x = screen.WIDTH // 2 + math.cos(angle + (math.pi)) * (250 + 40)
+            pos_y = screen.HEIGHT // 2 + math.sin(angle + (math.pi)) * (250 + 40)
+            self.arrows.append(Arrow((pos_x, pos_y), (player.posx, player.posy)))
+            self.last_time = pygame.time.get_ticks()
+        if pygame.time.get_ticks() - self.last_time_special >= self.special_firing_cooldown:
+            print("스페셜")
+            self.last_time_special = pygame.time.get_ticks()
+            self.special_firing_cooldown = 3000
+        
+
+
+
+class ArrowManager:
+    def __init__(self, game_start_time):
+        self.arrow_generator = ArrowGenerator(game_start_time)
+    def update(self, screen, player):
+        self.arrow_generator.update(screen, player)
+        for arrow in self.arrow_generator.arrows:
+            arrow.update(screen)
+        self.del_arrow(screen)
+
+    def del_arrow(self, screen):
+        self.arrow_generator.arrows = [arrow for arrow in self.arrow_generator.arrows if(arrow.posx > 0 and arrow.posx < screen.WIDTH and arrow.posy > 0 and arrow.posy < screen.HEIGHT)]
+
+
+
 
 class boom_mode(Screen_State):
     def __init__(self, screen):
@@ -122,7 +187,6 @@ class Player:
         self.posy = screen.HEIGHT // 2
         self.speed = 4
         self.hp = hp
-        #self.state = alive()
     def update(self, screen):
         pygame.draw.circle(screen.screen, self.player_color, (int(self.posx), int(self.posy)), self.player_radius)
                 
@@ -151,8 +215,10 @@ class GameState:
 class Playeralive(GameState):
     def __init__(self):
         self.player = Player(1, screen)
+        self.arrow_manager = ArrowManager(pygame.time.get_ticks())
     def update(self, screen):
         self.player.update(screen)
+        self.arrow_manager.update(screen, self.player)
 
 class Screen:
     def __init__(self):
@@ -186,6 +252,7 @@ while running:
             running = False
         screen.event_update(event)
     screen.update()
+    pygame.display.flip()
     clock.tick(60)
 pygame.quit()
 
