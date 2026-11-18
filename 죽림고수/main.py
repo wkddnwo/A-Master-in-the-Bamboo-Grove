@@ -59,6 +59,7 @@ class main_menu(Screen_State):
         self.bomb_mode_btn.isClicked(event)
 
 
+
 class Button:
     def __init__(self, text, pos, size, callback):
         self.text = font.malgunbd.render(text, True, color.WHITE)
@@ -89,7 +90,7 @@ class arrow_mode(Screen_State):
     def __init__(self, screen):
         pygame.display.set_caption("죽림고수 - 무한모드")
         
-        self.state = Playeralive()
+        self.state = Playeralive(screen)
 
     def update(self, screen):
         #맵 그리기
@@ -97,11 +98,14 @@ class arrow_mode(Screen_State):
         pygame.draw.circle(screen.screen, (30, 30, 30), (screen.WIDTH // 2, screen.HEIGHT // 2), 250)
         
         
-        self.state.update(screen)
+        self.state.update(screen, self)
         
     
     def event_update(self, event):
-        pass
+        self.state.event_update(event)
+
+    def change_state(self, state):
+        self.state = state
 
 class Arrow:
     def __init__(self, pos, target_pos):
@@ -215,17 +219,19 @@ class Player:
 class GameState:
     def update(self, screen):
         pass
+    def event_update(self, event):
+        pass
 
 class Playeralive(GameState):
-    def __init__(self):
+    def __init__(self, screen):
         self.player = Player(1, screen)
         self.arrow_manager = ArrowManager(pygame.time.get_ticks())
-    def update(self, screen):
+    def update(self, screen, arrow_mode):
         self.player.update(screen)
         self.arrow_manager.update(screen, self.player)
         for arrow in self.arrow_manager.arrow_generator.arrows:
             if self.IsArrow_collision(self.player.posx, self.player.posy, self.player.player_radius, arrow.rect):
-                print("피격")
+                arrow_mode.state = PlayerDie(screen)
     def IsArrow_collision(self, player_posx, player_posy,radius, rect):
         closest_x = max(rect.left, min(player_posx, rect.right))
         closest_y = max(rect.top, min(player_posy, rect.bottom))
@@ -236,6 +242,25 @@ class Playeralive(GameState):
         )
 
         return distance <= radius
+     
+    def event_update(self, event):
+        pass
+
+
+
+
+class PlayerDie(GameState):
+    def __init__(self, screen):
+        self.game_over_txt = font.malgunbd.render("Game Over", True, (255, 80, 80))
+        def go_main():
+            screen.state = main_menu(screen)
+        self.go_main_btn = Button("Go main", (screen.WIDTH / 2 - self.game_over_txt.get_width()/2, screen.HEIGHT/2 +25), (self.game_over_txt.get_width(), 50), go_main)
+    def update(self, screen, arrow_mode):
+        screen.screen.blit(self.game_over_txt, (screen.WIDTH // 2 - self.game_over_txt.get_width()/ 2, screen.HEIGHT // 2 - self.game_over_txt.get_height()/2))
+        self.go_main_btn.update(screen)
+
+    def event_update(self, event):
+        self.go_main_btn.isClicked(event)
 
 class Screen:
     def __init__(self):
