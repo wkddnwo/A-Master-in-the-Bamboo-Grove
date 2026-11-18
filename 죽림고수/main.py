@@ -142,12 +142,16 @@ class ArrowGenerator:
     def update(self, screen, player):
         if pygame.time.get_ticks() - self.last_time >= self.firing_cooldown :
             angle = math.atan2(player.posy - screen.HEIGHT // 2, player.posx - screen.WIDTH // 2)
-            pos_x = screen.WIDTH // 2 + math.cos(angle + (math.pi)) * (250 + 40)
+            pos_x = screen.WIDTH // 2 + math.cos(angle + (math.pi)) * (250 + 40) #맵 지름에 40을 더함
             pos_y = screen.HEIGHT // 2 + math.sin(angle + (math.pi)) * (250 + 40)
             self.arrows.append(Arrow((pos_x, pos_y), (player.posx, player.posy)))
             self.last_time = pygame.time.get_ticks()
         if pygame.time.get_ticks() - self.last_time_special >= self.special_firing_cooldown:
-            print("스페셜")
+            for i in range(10):
+                angle = i * (2 * math.pi / 10)
+                x = screen.WIDTH // 2 + math.cos(angle) * (250 + 40)#맵 지름에 40을 더함
+                y = screen.HEIGHT // 2 + math.sin(angle) * (250 + 40)
+                self.arrows.append(Arrow((x, y), (player.posx, player.posy)))
             self.last_time_special = pygame.time.get_ticks()
             self.special_firing_cooldown = 3000
         
