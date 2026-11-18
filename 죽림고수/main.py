@@ -91,7 +91,6 @@ class arrow_mode(Screen_State):
         pygame.display.set_caption("죽림고수 - 무한모드")
         
         self.state = Playeralive(screen)
-
     def update(self, screen):
         #맵 그리기
         screen.screen.fill(color.BLACK)
@@ -103,9 +102,6 @@ class arrow_mode(Screen_State):
     
     def event_update(self, event):
         self.state.event_update(event)
-
-    def change_state(self, state):
-        self.state = state
 
 class Arrow:
     def __init__(self, pos, target_pos):
@@ -226,12 +222,22 @@ class Playeralive(GameState):
     def __init__(self, screen):
         self.player = Player(1, screen)
         self.arrow_manager = ArrowManager(pygame.time.get_ticks())
+        self.start_ticks = pygame.time.get_ticks()
+        self.font = pygame.font.SysFont(None, 36)
     def update(self, screen, arrow_mode):
         self.player.update(screen)
         self.arrow_manager.update(screen, self.player)
+
+        #화살 충돌판정
         for arrow in self.arrow_manager.arrow_generator.arrows:
             if self.IsArrow_collision(self.player.posx, self.player.posy, self.player.player_radius, arrow.rect):
+                if (pygame.time.get_ticks() - self.start_ticks) > screen.arrow_mode_best_time:
+                    screen.arrow_mode_best_time = (pygame.time.get_ticks() - self.start_ticks) // 1000
                 arrow_mode.state = PlayerDie(screen)
+
+        screen.screen.blit(self.font.render(f"Time: {(pygame.time.get_ticks() - self.start_ticks) // 1000}", True, color.WHITE), (20, 20))
+        screen.screen.blit(self.font.render(f"Best: {screen.arrow_mode_best_time}", True, color.WHITE), (20, 50))
+        
     def IsArrow_collision(self, player_posx, player_posy,radius, rect):
         closest_x = max(rect.left, min(player_posx, rect.right))
         closest_y = max(rect.top, min(player_posy, rect.bottom))
@@ -252,12 +258,14 @@ class Playeralive(GameState):
 class PlayerDie(GameState):
     def __init__(self, screen):
         self.game_over_txt = font.malgunbd.render("Game Over", True, (255, 80, 80))
+        self.best_time_txt = font.malgunbd.render(f"Best time: {screen.arrow_mode_best_time}",True, color.WHITE)
         def go_main():
             screen.state = main_menu(screen)
         self.go_main_btn = Button("Go main", (screen.WIDTH / 2 - self.game_over_txt.get_width()/2, screen.HEIGHT/2 +25), (self.game_over_txt.get_width(), 50), go_main)
     def update(self, screen, arrow_mode):
         screen.screen.blit(self.game_over_txt, (screen.WIDTH // 2 - self.game_over_txt.get_width()/ 2, screen.HEIGHT // 2 - self.game_over_txt.get_height()/2))
         self.go_main_btn.update(screen)
+        screen.screen.blit(self.best_time_txt, (screen.WIDTH // 2 - self.game_over_txt.get_width()/ 2, screen.HEIGHT // 2 - self.game_over_txt.get_height()/2 + 100))
 
     def event_update(self, event):
         self.go_main_btn.isClicked(event)
@@ -268,12 +276,11 @@ class Screen:
         self.HEIGHT = 600
         self.CENTER = (self.WIDTH // 2, self.HEIGHT // 2)
         self.clock = pygame.time.Clock()
-        
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("죽림고수 - 모드 선택")
 
         self.state = main_menu(self)
-
+        self.arrow_mode_best_time = 0
     def update(self):
         self.state.update(self)
 
