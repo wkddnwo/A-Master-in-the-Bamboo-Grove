@@ -90,7 +90,7 @@ class arrow_mode(Screen_State):
     def __init__(self, screen):
         pygame.display.set_caption("죽림고수 - 무한모드")
         
-        self.state = Playeralive(screen)
+        self.state = Playeralive_arrow_mode(screen)
     def update(self, screen):
         #맵 그리기
         screen.screen.fill(color.BLACK)
@@ -178,7 +178,9 @@ class boom_mode(Screen_State):
         pygame.display.set_caption("죽림고수 - 폭탄모드")
     def update(self, screen):
         screen.screen.fill(color.BLACK)
-        pygame.display.flip()
+        pygame.draw.circle(screen.screen, (30, 30, 30), (screen.WIDTH // 2, screen.HEIGHT // 2), 250)
+        
+        
 
     def event_update(self, event):
         pass
@@ -218,7 +220,7 @@ class GameState:
     def event_update(self, event):
         pass
 
-class Playeralive(GameState):
+class Playeralive_arrow_mode(GameState):
     def __init__(self, screen):
         self.player = Player(1, screen)
         self.arrow_manager = ArrowManager(pygame.time.get_ticks())
@@ -233,7 +235,7 @@ class Playeralive(GameState):
             if self.IsArrow_collision(self.player.posx, self.player.posy, self.player.player_radius, arrow.rect):
                 if (pygame.time.get_ticks() - self.start_ticks) > screen.arrow_mode_best_time:
                     screen.arrow_mode_best_time = (pygame.time.get_ticks() - self.start_ticks) // 1000
-                arrow_mode.state = PlayerDie(screen)
+                arrow_mode.state = PlayerDie_arrow_mode(screen)
 
         screen.screen.blit(self.font.render(f"Time: {(pygame.time.get_ticks() - self.start_ticks) // 1000}", True, color.WHITE), (20, 20))
         screen.screen.blit(self.font.render(f"Best: {screen.arrow_mode_best_time}", True, color.WHITE), (20, 50))
@@ -255,7 +257,7 @@ class Playeralive(GameState):
 
 
 
-class PlayerDie(GameState):
+class PlayerDie_arrow_mode(GameState):
     def __init__(self, screen):
         self.game_over_txt = font.malgunbd.render("Game Over", True, (255, 80, 80))
         self.best_time_txt = font.malgunbd.render(f"Best time: {screen.arrow_mode_best_time}",True, color.WHITE)
@@ -304,79 +306,3 @@ while running:
     pygame.display.flip()
     clock.tick(60)
 pygame.quit()
-
-# import pygame
-# import sys
-# import math
-# import random
-
-# import bomb_mode
-# import arrow_mde
-
-# pygame.init()
-
-# WIDTH, HEIGHT = 600, 600
-# CENTER = (WIDTH // 2, HEIGHT // 2)
-# RADIUS = 250
-# screen = pygame.display.set_mode((WIDTH, HEIGHT))
-# pygame.display.set_caption("죽림고수 - 모드 선택")
-# clock = pygame.time.Clock()
-# font = pygame.font.Font("C:/Windows/Fonts/malgunbd.ttf", 40)
-# small_font = pygame.font.Font("C:/Windows/Fonts/malgunbd.ttf",20)
-
-# WHITE = (255, 255, 255)
-# BLACK = (0, 0, 0)
-# GRAY = (100, 100, 100)
-# HOVER = (160, 160, 160)
-# MAP_COLOR = (30, 30, 30)
-# PLAYER_COLOR = (50, 200, 255)
-# ARROW_COLOR = (255, 60, 60)
-# BOMB_COLOR = (255, 100, 0)
-# EXPLOSION_COLOR = (255, 180, 100)
-# BUTTON_COLOR = (80, 80, 80)
-# BUTTON_HOVER = (120, 120, 120)
-
-# player_radius = 5
-# best_time = 0
-
-# class Button:
-#     def __init__(self, text, pos, size):
-#         self.text = text
-#         self.rect = pygame.Rect(pos, size)
-#         self.color = HOVER
-
-#     def draw(self, surface):
-#         mouse_pos = pygame.mouse.get_pos()
-#         self.color = HOVER if self.rect.collidepoint(mouse_pos) else GRAY
-#         pygame.draw.rect(surface, self.color, self.rect)
-#         txt = font.render(self.text, True, WHITE)
-#         surface.blit(txt, (self.rect.centerx - txt.get_width() // 2,
-#                            self.rect.centery - txt.get_height() // 2))
-
-#     def is_clicked(self, event):
-#         return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
-
-
-# # Main UI loop
-# aroww_mode_btn = Button("무한모드", (200, 200), (200, 60))
-
-# bomb_mode_btn = Button("폭탄모드",(200, 300),(200, 60))
-
-# while True:
-#     screen.fill((20, 20, 20))
-#     for event in pygame.event.get():
-#         if event.type == pygame.QUIT:
-#             pygame.quit()
-#             sys.exit()
-#         if aroww_mode_btn.is_clicked(event):
-#             best_time = arrow_mde.run_arrow_mode(best_time)
-#         elif bomb_mode_btn.is_clicked(event):
-#             bomb_mode.run_bomb_mode()
-
-#     title = font.render("모드를 선택하세요", True, WHITE)
-#     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
-
-#     aroww_mode_btn.draw(screen)
-#     bomb_mode_btn.draw(screen)
-#     pygame.display.flip()
-#     clock.tick(60)
