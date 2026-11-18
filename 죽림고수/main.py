@@ -223,6 +223,19 @@ class Playeralive(GameState):
     def update(self, screen):
         self.player.update(screen)
         self.arrow_manager.update(screen, self.player)
+        for arrow in self.arrow_manager.arrow_generator.arrows:
+            if self.IsArrow_collision(self.player.posx, self.player.posy, self.player.player_radius, arrow.rect):
+                print("피격")
+    def IsArrow_collision(self, player_posx, player_posy,radius, rect):
+        closest_x = max(rect.left, min(player_posx, rect.right))
+        closest_y = max(rect.top, min(player_posy, rect.bottom))
+
+        distance = math.hypot(
+            player_posx - closest_x,
+            player_posy - closest_y
+        )
+
+        return distance <= radius
 
 class Screen:
     def __init__(self):
