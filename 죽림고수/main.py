@@ -1,5 +1,7 @@
 import pygame
 import math
+from disapear import DelAreaManager
+import random
 
 
 
@@ -203,21 +205,7 @@ class Player:
         pygame.draw.circle(screen.screen, self.player_color, (int(self.posx), int(self.posy)), self.player_radius)
                 
                 
-        #플레이어 이동
-        dx, dy = 0, 0
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.speed
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = self.speed
-        if keys[pygame.K_UP] or keys[pygame.K_w]: dy = -self.speed
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy = self.speed
-        new_x = self.posx + dx
-        new_y = self.posy + dy
-                
-        #맵 경계선충돌 판정
-        if math.hypot(new_x - screen.WIDTH // 2, new_y - screen.HEIGHT // 2) <= 250 - self.player_radius:
-            self.posx = new_x
-            self.posy = new_y
-
+        
         
 
 class GameState:
@@ -235,6 +223,22 @@ class Playeralive_arrow_mode(GameState):
     def update(self, screen, arrow_mode):
         self.player.update(screen)
         self.arrow_manager.update(screen, self.player)
+        #플레이어 이동
+        dx, dy = 0, 0
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.player.speed
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = self.player.speed
+        if keys[pygame.K_UP] or keys[pygame.K_w]: dy = -self.player.speed
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy = self.player.speed
+        new_x = self.player.posx + dx
+        new_y = self.player.posy + dy
+                
+        #맵 경계선충돌 판정
+        if math.hypot(new_x - screen.WIDTH // 2, new_y - screen.HEIGHT // 2) <= 250 - self.player.player_radius:
+            self.player.posx = new_x
+            self.player.posy = new_y
+
+
 
         #화살 충돌판정
         for arrow in self.arrow_manager.arrow_generator.arrows:
@@ -315,38 +319,6 @@ class Boom:
         return pygame.time.get_ticks() - self.time_of_birth >= 4000
 
 
-class DisappearArea:
-    def __init__(self, start_time, img_num, screen_size):
-        self.state = WaitStart(start_time)
-        self.danger_img = pygame.image.load(f"죽림고수/danger_sign{img_num}.png")
-        poslist = [
-            (self.danger_img.get_width()//2,self.danger_img.get_height()//2),
-            (0, screen_size[0] // 2),
-            (screen_size[1] // 2, 0),
-            (screen_size[0]//2, screen_size[1]//2)
-        ]
-        self.pos = poslist[img_num]
-    def update(self, screen):
-        self.state.update(screen, self.danger_img, self.pos, self)
-
-
-class WaitStart:
-    def __init__(self, game_start_time):
-        self.game_start_time = game_start_time
-    def update(self, screen, img_num, pos, disappearArea):
-        if pygame.time.get_ticks() - self.game_start_time >= 1000:
-            disappearArea.state = DangerSign(self.game_start_time)
-
-class DangerSign:
-    def __init__(self, game_start_time):
-        self.last_time = 0
-        self.game_start_time = game_start_time
-    def update(self, screen, img, pos, disappearArea):
-        screen.screen.blit(img, (pos[0], pos[1]))
-        
-        
-
-
 
 
 
@@ -357,9 +329,31 @@ class Playeralive_boom_mode(GameState):
         self.boom_manager = BoomManager(pygame.time.get_ticks())
         self.start_time = pygame.time.get_ticks()
         self.player_last_hit = 0
+        self.del_area_manager = DelAreaManager(random.randint(0, 3), pygame.time.get_ticks(), screen.screen)
+
     def update(self, screen, boom_mode):
+        self.del_area_manager.update(screen.screen)
         self.boom_manager.update(screen, self.player)
         self.player.update(screen)
+
+        dx, dy = 0, 0
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx = -self.player.speed
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx = self.player.speed
+        if keys[pygame.K_UP] or keys[pygame.K_w]: dy = -self.player.speed
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy = self.player.speed
+        new_x = self.player.posx + dx
+        new_y = self.player.posy + dy
+                
+        #맵 경계선충돌 판정
+        if math.hypot(new_x - 600 // 2, new_y - 600 // 2) <= 250 - self.player.player_radius:
+            if not self.del_area_manager.Iscollision(self.player.player_radius, (new_x, new_y)):
+                self.player.posx = new_x
+                self.player.posy = new_y
+        #플레이어 장외이탈 처리
+        if self.del_area_manager.Iscollision(self.player.player_radius, (self.player.posx+self.player.speed, self.player.posy)) and self.del_area_manager.Iscollision(self.player.player_radius, (self.player.posx-self.player.speed, self.player.posy)):
+            if self.del_area_manager.Iscollision(self.player.player_radius, (self.player.posx, self.player.posy+self.player.speed)) and self.del_area_manager.Iscollision(self.player.player_radius, (self.player.posx, self.player.posy-self.player.speed)):
+                boom_mode.state = PlayerDie_boom_mode(screen)
 
         #플레이어 충돌처리
         if pygame.time.get_ticks() - self.player_last_hit >= 1500:
@@ -370,6 +364,8 @@ class Playeralive_boom_mode(GameState):
                     if self.player.hp <= 0:
                         boom_mode.state = PlayerDie_boom_mode(screen)
                     break
+        
+
 
         #플레이어 우승여부 확인
         if pygame.time.get_ticks() - self.start_time >= 30000:
