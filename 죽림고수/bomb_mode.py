@@ -16,15 +16,15 @@ clock = pygame.time.Clock()
 
 #이미지 불러오기
 #위험 표시
-danger_sign = [pygame.image.load("danger_sign.png"),
-               pygame.image.load("danger_sign1.png"),
-               pygame.image.load("danger_sign2.png"),
-               pygame.image.load("danger_sign3.png")]
-disappeared_area = [pygame.image.load("disappeared_area.png"),
-                    pygame.image.load("disappeared_area1.png"),
-                    pygame.image.load("disappeared_area2.png"),
-                    pygame.image.load("disappeared_area3.png")]
+danger_sign = [pygame.image.load("죽림고수/danger_sign0.png"),
+               pygame.image.load("죽림고수/danger_sign1.png"),
+               pygame.image.load("죽림고수/danger_sign2.png"),
+               pygame.image.load("죽림고수/danger_sign3.png")]
 
+disappeared_area = [pygame.image.load("죽림고수/disappeared_area0.png"),
+                    pygame.image.load("죽림고수/disappeared_area1.png"),
+                    pygame.image.load("죽림고수/disappeared_area2.png"),
+                    pygame.image.load("죽림고수/disappeared_area3.png")]
 # 색상
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)

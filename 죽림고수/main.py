@@ -176,14 +176,20 @@ class ArrowManager:
 class boom_mode(Screen_State):
     def __init__(self, screen):
         pygame.display.set_caption("죽림고수 - 폭탄모드")
+
+        self.state = Playeralive_boom_mode(screen)
+
     def update(self, screen):
         screen.screen.fill(color.BLACK)
         pygame.draw.circle(screen.screen, (30, 30, 30), (screen.WIDTH // 2, screen.HEIGHT // 2), 250)
         
+        self.state.update(screen, self)
         
 
     def event_update(self, event):
-        pass
+        self.state.event_update(event)
+
+
 
 class Player:
     def __init__(self, hp, screen):
@@ -257,6 +263,7 @@ class Playeralive_arrow_mode(GameState):
 
 
 
+
 class PlayerDie_arrow_mode(GameState):
     def __init__(self, screen):
         self.game_over_txt = font.malgunbd.render("Game Over", True, (255, 80, 80))
@@ -271,6 +278,183 @@ class PlayerDie_arrow_mode(GameState):
 
     def event_update(self, event):
         self.go_main_btn.isClicked(event)
+
+class Boom:
+    def __init__(self, pos, target_pos):
+        self.time_of_birth = pygame.time.get_ticks()
+
+        self.posx = pos[0]
+        self.posy = pos[1]
+        target_posx = target_pos[0]
+        target_posy = target_pos[1]
+        dist = math.hypot(target_posx-self.posx, target_posy - self.posy)
+        self.speed = 5.5
+        self.frictional_force = 0.98
+        self.dx = (target_posx - self.posx) / dist
+        self.radius = 6
+        self.dy = (target_posy - self.posy) / dist
+
+        self.state = self.nomal_state
+        
+    def update(self, screen):
+        self.nomal_state(screen)
+
+    def nomal_state(self, screen):
+        self.speed *= self.frictional_force
+        self.posx += (self.dx * self.speed)
+        self.posy += (self.dy * self.speed)
+        pygame.draw.circle(screen.screen, (255, 100, 0), (int(self.posx), int(self.posy)), self.radius)
+        if pygame.time.get_ticks() - self.time_of_birth >= 3000:
+            self.radius = 30
+            self.state = self.explosion_state(screen)
+
+    def explosion_state(self, screen):
+        pygame.draw.circle(screen.screen, (255, 200, 50), (int(self.posx), int(self.posy)), self.radius)
+
+    def IsBoomDie(self):
+        return pygame.time.get_ticks() - self.time_of_birth >= 4000
+
+
+class DisappearArea:
+    def __init__(self, start_time, img_num, screen_size):
+        self.state = WaitStart(start_time)
+        self.danger_img = pygame.image.load(f"죽림고수/danger_sign{img_num}.png")
+        poslist = [
+            (self.danger_img.get_width()//2,self.danger_img.get_height()//2),
+            (0, screen_size[0] // 2),
+            (screen_size[1] // 2, 0),
+            (screen_size[0]//2, screen_size[1]//2)
+        ]
+        self.pos = poslist[img_num]
+    def update(self, screen):
+        self.state.update(screen, self.danger_img, self.pos, self)
+
+
+class WaitStart:
+    def __init__(self, game_start_time):
+        self.game_start_time = game_start_time
+    def update(self, screen, img_num, pos, disappearArea):
+        if pygame.time.get_ticks() - self.game_start_time >= 1000:
+            disappearArea.state = DangerSign(self.game_start_time)
+
+class DangerSign:
+    def __init__(self, game_start_time):
+        self.last_time = 0
+        self.game_start_time = game_start_time
+    def update(self, screen, img, pos, disappearArea):
+        screen.screen.blit(img, (pos[0], pos[1]))
+        
+        
+
+
+
+
+
+class Playeralive_boom_mode(GameState):
+    def __init__(self, screen):
+        self.font = pygame.font.SysFont(None, 36)
+        self.player = Player(3, screen)
+        self.boom_manager = BoomManager(pygame.time.get_ticks())
+        self.start_time = pygame.time.get_ticks()
+        self.player_last_hit = 0
+    def update(self, screen, boom_mode):
+        self.boom_manager.update(screen, self.player)
+        self.player.update(screen)
+
+        #플레이어 충돌처리
+        if pygame.time.get_ticks() - self.player_last_hit >= 1500:
+            for boom in self.boom_manager.boom_generator.booms:
+                if self.IsBoomCollision((self.player.posx, self.player.posy), self.player.player_radius, (boom.posx, boom.posy), boom.radius):
+                    self.player.hp -= 1
+                    self.player_last_hit = pygame.time.get_ticks()
+                    if self.player.hp <= 0:
+                        boom_mode.state = PlayerDie_boom_mode(screen)
+                    break
+
+        #플레이어 우승여부 확인
+        if pygame.time.get_ticks() - self.start_time >= 30000:
+            boom_mode.state = PlayerWin_boom_mode(screen)
+
+
+        #시간 HP 출력
+        screen.screen.blit(self.font.render(f"HP: {self.player.hp}", True, color.WHITE), (20, 20))
+        screen.screen.blit(self.font.render(f"Time: {(pygame.time.get_ticks() - self.start_time)//1000}", True, color.WHITE), (20, 50))
+        
+    def event_update(self, event):
+        pass
+
+    def IsBoomCollision(self, pos1, radius1, pos2, radius2):
+        dx = pos2[0] - pos1[0]
+        dy = pos2[1] - pos1[1]
+
+        distance = math.hypot(dx, dy)
+
+        return distance <= radius1 + radius2
+
+class PlayerDie_boom_mode(GameState):
+    def __init__(self, screen):
+        self.game_over_txt = font.malgunbd.render("Game Over", True, (255, 80, 80))
+        def go_main():
+            screen.state = main_menu(screen)
+        self.go_main_btn = Button("Go main", (screen.WIDTH / 2 - self.game_over_txt.get_width()/2, screen.HEIGHT/2 +25), (self.game_over_txt.get_width(), 50), go_main)
+    def update(self, screen, arrow_mode):
+        screen.screen.blit(self.game_over_txt, (screen.WIDTH // 2 - self.game_over_txt.get_width()/ 2, screen.HEIGHT // 2 - self.game_over_txt.get_height()/2))
+        self.go_main_btn.update(screen)
+
+    def event_update(self, event):
+        self.go_main_btn.isClicked(event)
+
+class PlayerWin_boom_mode(GameState):
+    def __init__(self, screen):
+        self.game_over_txt = font.malgunbd.render("You Win", True, (255, 80, 80))
+        def go_main():
+            screen.state = main_menu(screen)
+        self.go_main_btn = Button("Go main", (screen.WIDTH / 2 - self.game_over_txt.get_width()/2, screen.HEIGHT/2 +25), (self.game_over_txt.get_width(), 50), go_main)
+    def update(self, screen, arrow_mode):
+        screen.screen.blit(self.game_over_txt, (screen.WIDTH // 2 - self.game_over_txt.get_width()/ 2, screen.HEIGHT // 2 - self.game_over_txt.get_height()/2))
+        self.go_main_btn.update(screen)
+
+    def event_update(self, event):
+        self.go_main_btn.isClicked(event)
+
+
+class BoomManager:
+    def __init__(self, game_start_time):
+        self.boom_generator = BoomGenerator(game_start_time)
+    def update(self, screen, player):
+        self.boom_generator.update(screen, player)
+        for arrow in self.boom_generator.booms:
+            arrow.update(screen)
+        self.del_boom(screen)
+
+    def del_boom(self, screen):
+        self.boom_generator.booms = [boom for boom in self.boom_generator.booms if not boom.IsBoomDie()]
+
+
+class BoomGenerator:
+    def __init__(self, game_start_time):
+        self.booms = []
+        self.last_time = game_start_time
+        self.last_time_special = game_start_time
+        self.firing_cooldown = 500
+        self.special_firing_cooldown = 5000
+    def update(self, screen, player):
+        if pygame.time.get_ticks() - self.last_time >= self.firing_cooldown :
+            angle = math.atan2(player.posy - screen.HEIGHT // 2, player.posx - screen.WIDTH // 2)
+            pos_x = screen.WIDTH // 2 + math.cos(angle + (math.pi)) * (250 + 40) #맵 지름에 40을 더함
+            pos_y = screen.HEIGHT // 2 + math.sin(angle + (math.pi)) * (250 + 40)
+            self.booms.append(Boom((pos_x, pos_y), (player.posx, player.posy)))
+            self.last_time = pygame.time.get_ticks()
+        if pygame.time.get_ticks() - self.last_time_special >= self.special_firing_cooldown:
+            for i in range(12):
+                angle = i * (2 * math.pi / 10)
+                x = screen.WIDTH // 2 + math.cos(angle) * (250 + 40)#맵 지름에 40을 더함
+                y = screen.HEIGHT // 2 + math.sin(angle) * (250 + 40)
+                self.booms.append(Boom((x, y), (player.posx, player.posy)))
+            self.last_time_special = pygame.time.get_ticks()
+        
+
+
 
 class Screen:
     def __init__(self):
