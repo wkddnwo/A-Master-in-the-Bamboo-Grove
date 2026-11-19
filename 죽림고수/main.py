@@ -301,7 +301,7 @@ class Boom:
         self.state = self.nomal_state
         
     def update(self, screen):
-        self.nomal_state(screen)
+        self.state(screen)
 
     def nomal_state(self, screen):
         self.speed *= self.frictional_force
@@ -310,7 +310,7 @@ class Boom:
         pygame.draw.circle(screen.screen, (255, 100, 0), (int(self.posx), int(self.posy)), self.radius)
         if pygame.time.get_ticks() - self.time_of_birth >= 3000:
             self.radius = 30
-            self.state = self.explosion_state(screen)
+            self.state = self.explosion_state
 
     def explosion_state(self, screen):
         pygame.draw.circle(screen.screen, (255, 200, 50), (int(self.posx), int(self.posy)), self.radius)
