@@ -2,7 +2,8 @@ import pygame
 import math
 from disapear import DelAreaManager
 import random
-
+from pathlib import Path
+import json
 
 
 
@@ -243,12 +244,13 @@ class Playeralive_arrow_mode(GameState):
         #화살 충돌판정
         for arrow in self.arrow_manager.arrow_generator.arrows:
             if self.IsArrow_collision(self.player.posx, self.player.posy, self.player.player_radius, arrow.rect):
-                if (pygame.time.get_ticks() - self.start_ticks) > screen.arrow_mode_best_time:
-                    screen.arrow_mode_best_time = (pygame.time.get_ticks() - self.start_ticks) // 1000
+                if (pygame.time.get_ticks() - self.start_ticks) / 1000 > screen.save.best_time:
+                    screen.save.best_time = (pygame.time.get_ticks() - self.start_ticks) // 1000
+                    screen.save.update()
                 arrow_mode.state = PlayerDie_arrow_mode(screen)
 
         screen.screen.blit(self.font.render(f"Time: {(pygame.time.get_ticks() - self.start_ticks) // 1000}", True, color.WHITE), (20, 20))
-        screen.screen.blit(self.font.render(f"Best: {screen.arrow_mode_best_time}", True, color.WHITE), (20, 50))
+        screen.screen.blit(self.font.render(f"Best: {screen.save.best_time}", True, color.WHITE), (20, 50))
         
     def IsArrow_collision(self, player_posx, player_posy,radius, rect):
         closest_x = max(rect.left, min(player_posx, rect.right))
@@ -271,7 +273,7 @@ class Playeralive_arrow_mode(GameState):
 class PlayerDie_arrow_mode(GameState):
     def __init__(self, screen):
         self.game_over_txt = font.malgunbd.render("Game Over", True, (255, 80, 80))
-        self.best_time_txt = font.malgunbd.render(f"Best time: {screen.arrow_mode_best_time}",True, color.WHITE)
+        self.best_time_txt = font.malgunbd.render(f"Best time: {screen.save.best_time}",True, color.WHITE)
         def go_main():
             screen.state = main_menu(screen)
         self.go_main_btn = Button("Go main", (screen.WIDTH / 2 - self.game_over_txt.get_width()/2, screen.HEIGHT/2 +25), (self.game_over_txt.get_width(), 50), go_main)
@@ -460,9 +462,9 @@ class Screen:
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         pygame.display.set_caption("죽림고수 - 모드 선택")
-
+        self.save = Save()
         self.state = main_menu(self)
-        self.arrow_mode_best_time = 0
+
     def update(self):
         self.state.update(self)
 
@@ -470,7 +472,25 @@ class Screen:
         self.state.event_update(event)
 
 
+class Save:
+    def __init__(self):
+        self.file_addres = "죽림고수/save/save.josn"
+        file_path = Path(self.file_addres)
 
+        if not file_path.exists():
+            file_path.touch()
+            with open(self.file_addres, "w", encoding="utf-8") as data:
+                json.dump({
+                    "best_time":0
+                },data , ensure_ascii=False, indent=4)
+        with open(self.file_addres, "r", encoding="utf-8") as save:
+            data = json.load(save)
+            self.best_time = data["best_time"]
+    def update(self):
+        with open(self.file_addres, "w", encoding="utf-8") as save:
+            json.dump({
+                "best_time":self.best_time
+            }, save,  ensure_ascii=False, indent=4)
 
 screen = Screen()
 
@@ -485,4 +505,6 @@ while running:
     screen.update()
     pygame.display.flip()
     clock.tick(60)
+
+
 pygame.quit()
