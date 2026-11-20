@@ -474,7 +474,7 @@ class Screen:
 
 class Save:
     def __init__(self):
-        self.file_addres = "죽림고수/save/save.josn"
+        self.file_addres = "죽림고수/save/save.json"
         file_path = Path(self.file_addres)
 
         if not file_path.exists():
